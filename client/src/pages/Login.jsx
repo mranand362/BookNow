@@ -195,18 +195,7 @@ const Login = () => {
             </div>
           </div>
           <div className="mt-3 grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              className="flex items-center justify-center gap-2 px-3 py-1.5 border border-white/20 rounded-lg text-white text-sm hover:bg-white/10 transition"
-            >
-              <FaGoogle size={14} /> Google
-            </button>
-            <button
-              type="button"
-              className="flex items-center justify-center gap-2 px-3 py-1.5 border border-white/20 rounded-lg text-white text-sm hover:bg-white/10 transition"
-            >
-              <FaFacebook size={14} /> Facebook
-            </button>
+           
           </div>
         </div>
 

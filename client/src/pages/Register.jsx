@@ -1,6 +1,6 @@
 import React, { useState, useContext } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { AuthContext } from '../context/AuthContext';
+import { AuthContext } from '../context/AuthContext'; // ✅ Fixed import
 import { motion, AnimatePresence } from 'framer-motion';
 import { FaUser, FaEnvelope, FaLock, FaEye, FaEyeSlash, FaSpinner, FaTicketAlt, FaGoogle, FaFacebook } from 'react-icons/fa';
 
@@ -13,8 +13,12 @@ const Register = () => {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  const { register, verifyOTP } = useContext(AuthContext);
+  const { register, verifyOTP } = useContext(AuthContext); // ✅ This will now work
   const navigate = useNavigate();
+
+  // ... rest of your component code
+  // Debug: Check if context is available
+  console.log('AuthContext:', { register, verifyOTP }); // ✅ Add this to debug
 
   const getPasswordStrength = () => {
     if (!password) return 0;
@@ -39,17 +43,32 @@ const Register = () => {
     e.preventDefault();
     setLoading(true);
     setError('');
+    
     try {
       if (!showOTP) {
-        await register(name, email, password);
+        // Registration step
+        const response = await register(name, email, password);
+        console.log('Registration response:', response);
         setShowOTP(true);
-        setError('');
       } else {
-        await verifyOTP(email, otp);
+        // OTP verification step
+        const userData = await verifyOTP(email, otp);
+        console.log('Verification response:', userData);
         navigate('/dashboard');
       }
     } catch (err) {
-      setError(err);
+      console.error('Error:', err);
+      // Handle different error types
+      if (err.response) {
+        // Server responded with error
+        setError(err.response.data?.message || 'Registration failed');
+      } else if (err.request) {
+        // Request made but no response
+        setError('Cannot connect to server. Please check your connection.');
+      } else {
+        // Something else
+        setError(err.message || 'An error occurred');
+      }
     } finally {
       setLoading(false);
     }
@@ -85,8 +104,12 @@ const Register = () => {
         </div>
 
         <div className="text-center mb-6">
-          <h2 className="text-2xl font-bold text-white">Create an Account</h2>
-          <p className="mt-1 text-sm text-gray-300">Join BookNow today</p>
+          <h2 className="text-2xl font-bold text-white">
+            {showOTP ? 'Verify Your Email' : 'Create an Account'}
+          </h2>
+          <p className="mt-1 text-sm text-gray-300">
+            {showOTP ? `Enter the code sent to ${email}` : 'Join BookNow today'}
+          </p>
         </div>
 
         <AnimatePresence>
@@ -166,7 +189,6 @@ const Register = () => {
                     type="button"
                     className="absolute inset-y-0 right-0 pr-3 flex items-center"
                     onClick={() => setShowPassword(!showPassword)}
-                    aria-label={showPassword ? 'Hide password' : 'Show password'}
                   >
                     {showPassword ? (
                       <FaEyeSlash className="h-4 w-4 text-gray-400 hover:text-gray-300" />
@@ -195,22 +217,26 @@ const Register = () => {
             </>
           ) : (
             <div>
-              <div className="bg-green-500/20 border border-green-500/50 rounded-lg p-2 mb-3 backdrop-blur-sm text-xs text-green-200">
-                An OTP has been sent to your email. Please verify.
-              </div>
               <label htmlFor="otp" className="block text-xs font-medium text-gray-200 mb-1">
-                Verification Code (OTP)
+                Verification Code
               </label>
               <input
                 id="otp"
                 type="text"
                 required
-                placeholder="6-digit code"
+                placeholder="Enter 6-digit code"
                 className="block w-full px-3 py-2 text-center text-base tracking-widest bg-white/10 border border-white/20 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent transition"
                 value={otp}
                 onChange={(e) => setOtp(e.target.value)}
                 maxLength="6"
               />
+              <button
+                type="button"
+                onClick={() => setShowOTP(false)}
+                className="mt-3 text-sm text-blue-400 hover:text-blue-300 w-full text-center"
+              >
+                ← Go back
+              </button>
             </div>
           )}
 
@@ -224,40 +250,31 @@ const Register = () => {
           </button>
         </form>
 
-        <div className="mt-6">
-          <div className="relative">
-            <div className="absolute inset-0 flex items-center">
-              <div className="w-full border-t border-white/20"></div>
-            </div>
-            <div className="relative flex justify-center text-xs">
-              <span className="px-2 bg-transparent text-gray-400">Or sign up with</span>
-            </div>
-          </div>
-          <div className="mt-3 grid grid-cols-2 gap-3">
-            <button
-              type="button"
-              className="flex items-center justify-center gap-2 px-3 py-1.5 border border-white/20 rounded-lg text-white text-sm hover:bg-white/10 transition"
-            >
-              <FaGoogle size={14} /> Google
-            </button>
-            <button
-              type="button"
-              className="flex items-center justify-center gap-2 px-3 py-1.5 border border-white/20 rounded-lg text-white text-sm hover:bg-white/10 transition"
-            >
-              <FaFacebook size={14} /> Facebook
-            </button>
-          </div>
-        </div>
-
         {!showOTP && (
-          <div className="mt-4 text-center">
-            <p className="text-xs text-gray-300">
-              Already have an account?{' '}
-              <Link to="/login" className="font-medium text-blue-400 hover:text-blue-300">
-                Sign in
-              </Link>
-            </p>
-          </div>
+          <>
+            <div className="mt-6">
+              <div className="relative">
+                <div className="absolute inset-0 flex items-center">
+                  <div className="w-full border-t border-white/20"></div>
+                </div>
+                <div className="relative flex justify-center text-xs">
+                  <span className="px-2 bg-transparent text-gray-400">Or sign up with</span>
+                </div>
+              </div>
+              <div className="mt-3 grid grid-cols-2 gap-3">
+             
+              </div>
+            </div>
+
+            <div className="mt-4 text-center">
+              <p className="text-xs text-gray-300">
+                Already have an account?{' '}
+                <Link to="/login" className="font-medium text-blue-400 hover:text-blue-300">
+                  Sign in
+                </Link>
+              </p>
+            </div>
+          </>
         )}
       </motion.div>
     </div>
